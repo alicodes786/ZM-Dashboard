@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Users, ClipboardList, TrendingUp, Calendar, Plus, ArrowRight, Building2, Briefcase } from 'lucide-react'
-import { Staff, DailyWorkEntryWithStaff, Client, JobWithClient } from '@/lib/types'
+import { Staff, DailyWorkEntryWithFullRelations, Client, JobWithClient } from '@/lib/types'
 import { StaffService } from '@/lib/services/staff'
 import { DailyWorkService } from '@/lib/services/daily-work'
 import { ClientService } from '@/lib/services/clients'
@@ -18,8 +18,11 @@ export default function Home() {
   const [staff, setStaff] = useState<Staff[]>([])
   const [clients, setClients] = useState<Client[]>([])
   const [jobs, setJobs] = useState<JobWithClient[]>([])
-  const [todayEntries, setTodayEntries] = useState<DailyWorkEntryWithStaff[]>([])
-  const [todayMargin, setTodayMargin] = useState<any>(null)
+  const [todayEntries, setTodayEntries] = useState<DailyWorkEntryWithFullRelations[]>([])
+  const [todayMargin, setTodayMargin] = useState<{
+    totalMarginAmount: number;
+    averageMarginPercentage: number;
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -51,7 +54,7 @@ export default function Home() {
 
   const activeStaff = staff.filter(s => s.active_status)
   const activeClients = clients.filter(c => c.active_status)
-  const todayHours = todayEntries.reduce((sum, entry) => sum + entry.hours_worked, 0)
+  // const todayHours = todayEntries.reduce((sum, entry) => sum + entry.hours_worked, 0)
   const todayCost = todayEntries.reduce((sum, entry) => sum + (entry.client_cost || entry.override_cost || entry.calculated_cost), 0)
   const todayMarginAmount = todayMargin?.totalMarginAmount || 0
   const todayMarginPercentage = todayMargin?.averageMarginPercentage || 0
@@ -125,7 +128,7 @@ export default function Home() {
               <div className="flex items-center">
                 <TrendingUp className="h-8 w-8 text-orange-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Today's Revenue</p>
+                  <p className="text-sm font-medium text-gray-500">Today&apos;s Revenue</p>
                   <p className="text-2xl font-bold text-gray-900">{formatCurrency(todayCost)}</p>
                   <p className="text-xs text-green-600">
                     Margin: {formatCurrency(todayMarginAmount)} ({todayMarginPercentage}%)
@@ -228,7 +231,7 @@ export default function Home() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                Today's Work Entries
+                Today&apos;s Work Entries
                 <Link href="/daily-work">
                   <Button variant="ghost" size="sm">
                     View All <ArrowRight className="ml-1 h-4 w-4" />

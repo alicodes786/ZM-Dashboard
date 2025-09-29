@@ -259,9 +259,24 @@ export interface Database {
     Views: {
       [_ in never]: never
     }
-    Functions: {
-      [_ in never]: never
-    }
+      Functions: {
+        migrate_client_names: {
+          Args: Record<PropertyKey, never>
+          Returns: undefined
+        }
+        get_daily_margin_summary: {
+          Args: {
+            p_date: string
+          }
+          Returns: {
+            total_labor_cost: number
+            total_client_cost: number
+            total_margin_amount: number
+            average_margin_percentage: number
+            entries_count: number
+          }
+        }
+      }
     Enums: {
       [_ in never]: never
     }

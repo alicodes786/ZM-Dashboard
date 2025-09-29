@@ -1,16 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, X, Edit } from 'lucide-react'
+import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { TableCell, TableRow } from '@/components/ui/table'
-import { DailyWorkEntry, DailyWorkEntryWithStaff } from '@/lib/types'
+import { DailyWorkEntryWithFullRelations } from '@/lib/types'
 import { DailyWorkService } from '@/lib/services/daily-work'
-import { formatCurrency, formatTime } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 
 interface InlineEditRowProps {
-  entry: DailyWorkEntryWithStaff
+  entry: DailyWorkEntryWithFullRelations
   onUpdate: () => void
   onCancel: () => void
 }
@@ -78,11 +78,11 @@ export function InlineEditRow({ entry, onUpdate, onCancel }: InlineEditRowProps)
       <TableCell>
         <div>
           <div className="font-medium">
-            {(entry as any).client?.name || entry.client_name}
+            {entry.client?.name || entry.client_name}
           </div>
-          {(entry as any).client?.company_name && (
+          {entry.client?.company_name && (
             <div className="text-sm text-gray-500">
-              {(entry as any).client.company_name}
+              {entry.client.company_name}
             </div>
           )}
         </div>

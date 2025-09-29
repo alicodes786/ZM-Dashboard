@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Calendar, Filter } from 'lucide-react'
+import { Plus, Calendar } from 'lucide-react'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,12 +10,12 @@ import { WorkEntryForm } from '@/components/daily-work/work-entry-form'
 import { DailySummary } from '@/components/daily-work/daily-summary'
 import { InlineEditRow } from '@/components/daily-work/inline-edit-row'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { DailyWorkEntry, DailyWorkEntryWithStaff, DailySummary as DailySummaryType } from '@/lib/types'
+import { DailyWorkEntry, DailyWorkEntryWithFullRelations, DailySummary as DailySummaryType } from '@/lib/types'
 import { DailyWorkService, MarginSummary } from '@/lib/services/daily-work'
-import { formatCurrency, formatTime, formatDate } from '@/lib/utils'
+import { formatCurrency, formatTime } from '@/lib/utils'
 
 export default function DailyWorkPage() {
-  const [entries, setEntries] = useState<DailyWorkEntryWithStaff[]>([])
+  const [entries, setEntries] = useState<DailyWorkEntryWithFullRelations[]>([])
   const [summary, setSummary] = useState<DailySummaryType[]>([])
   const [marginSummary, setMarginSummary] = useState<MarginSummary | null>(null)
   const [loading, setLoading] = useState(true)
@@ -260,11 +260,11 @@ export default function DailyWorkPage() {
                             <div className="font-medium text-gray-900 truncate max-w-xs">
                               {entry.task_description}
                             </div>
-                            {(entry as any).job && (
-                              <div className="text-sm text-blue-600 truncate max-w-xs">
-                                Job: {(entry as any).job.title}
-                              </div>
-                            )}
+                          {entry.job && (
+                            <div className="text-sm text-blue-600 truncate max-w-xs">
+                              Job: {entry.job.title}
+                            </div>
+                          )}
                             {entry.notes && (
                               <div className="text-sm text-gray-500 truncate max-w-xs">
                                 {entry.notes}
@@ -275,11 +275,11 @@ export default function DailyWorkPage() {
                         <TableCell>
                           <div>
                             <div className="font-medium">
-                              {(entry as any).client?.name || entry.client_name}
+                              {entry.client?.name || entry.client_name}
                             </div>
-                            {(entry as any).client?.company_name && (
+                            {entry.client?.company_name && (
                               <div className="text-sm text-gray-500">
-                                {(entry as any).client.company_name}
+                                {entry.client.company_name}
                               </div>
                             )}
                           </div>

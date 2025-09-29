@@ -8,7 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 export function formatCurrency(amount: number): string {
   try {
     // Try using Intl.NumberFormat first
-    if (typeof Intl !== 'undefined' && Intl.NumberFormat) {
+    if (typeof Intl !== 'undefined' && typeof Intl.NumberFormat !== 'undefined') {
       return new Intl.NumberFormat('en-GB', {
         style: 'currency',
         currency: 'GBP',
@@ -39,8 +39,8 @@ export function formatDate(date: string | Date): string {
     }
     
     // Try using Intl.DateFormat first
-    if (typeof Intl !== 'undefined' && Intl.DateFormat) {
-      return new Intl.DateFormat('en-GB', {
+    if (typeof Intl !== 'undefined' && typeof Intl.DateTimeFormat !== 'undefined') {
+      return new Intl.DateTimeFormat('en-GB', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',

@@ -43,6 +43,16 @@ export interface DailyWorkEntryWithRelations extends DailyWorkEntry {
   job?: JobWithClient
 }
 
+export interface DailyWorkEntryWithFullRelations extends DailyWorkEntry {
+  staff?: Staff
+  client?: Client
+  job?: {
+    id: string
+    title: string
+    client?: Client
+  }
+}
+
 export interface DailySummary {
   staffId: string
   staffName: string

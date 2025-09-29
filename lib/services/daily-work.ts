@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import { DailyWorkEntry, DailyWorkEntryInsert, DailyWorkEntryUpdate, DailyWorkEntryWithStaff, DailySummary } from '@/lib/types'
+import { DailyWorkEntry, DailyWorkEntryInsert, DailyWorkEntryUpdate, DailyWorkEntryWithFullRelations, DailySummary } from '@/lib/types'
 import { StaffService } from './staff'
 
 export interface MarginSummary {
@@ -11,7 +11,7 @@ export interface MarginSummary {
 }
 
 export class DailyWorkService {
-  static async getAll(): Promise<DailyWorkEntryWithStaff[]> {
+  static async getAll(): Promise<DailyWorkEntryWithFullRelations[]> {
     const { data, error } = await supabase
       .from('daily_work_entries')
       .select(`
@@ -31,10 +31,10 @@ export class DailyWorkService {
       throw new Error('Failed to fetch daily work entries')
     }
 
-    return data || []
+    return (data || []) as DailyWorkEntryWithFullRelations[]
   }
 
-  static async getByDate(date: string): Promise<DailyWorkEntryWithStaff[]> {
+  static async getByDate(date: string): Promise<DailyWorkEntryWithFullRelations[]> {
     const { data, error } = await supabase
       .from('daily_work_entries')
       .select(`
@@ -54,7 +54,7 @@ export class DailyWorkService {
       throw new Error('Failed to fetch daily work entries')
     }
 
-    return data || []
+    return (data || []) as DailyWorkEntryWithFullRelations[]
   }
 
   static async getByStaff(staffId: string, startDate?: string, endDate?: string): Promise<DailyWorkEntry[]> {
@@ -218,12 +218,21 @@ export class DailyWorkService {
       throw new Error('Failed to fetch margin summary')
     }
 
+    // Type assertion since we know the structure from our database function
+    const marginData = data as {
+      total_labor_cost: number
+      total_client_cost: number
+      total_margin_amount: number
+      average_margin_percentage: number
+      entries_count: number
+    } | null
+
     return {
-      totalLaborCost: data?.total_labor_cost || 0,
-      totalClientCost: data?.total_client_cost || 0,
-      totalMarginAmount: data?.total_margin_amount || 0,
-      averageMarginPercentage: data?.average_margin_percentage || 0,
-      entriesCount: data?.entries_count || 0,
+      totalLaborCost: marginData?.total_labor_cost || 0,
+      totalClientCost: marginData?.total_client_cost || 0,
+      totalMarginAmount: marginData?.total_margin_amount || 0,
+      averageMarginPercentage: marginData?.average_margin_percentage || 0,
+      entriesCount: marginData?.entries_count || 0,
     }
   }
 
