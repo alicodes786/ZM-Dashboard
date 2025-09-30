@@ -16,6 +16,10 @@ export type DailyWorkEntry = Database['public']['Tables']['daily_work_entries'][
 export type DailyWorkEntryInsert = Database['public']['Tables']['daily_work_entries']['Insert']
 export type DailyWorkEntryUpdate = Database['public']['Tables']['daily_work_entries']['Update']
 
+export type User = Database['public']['Tables']['users']['Row']
+export type UserInsert = Database['public']['Tables']['users']['Insert']
+export type UserUpdate = Database['public']['Tables']['users']['Update']
+
 export interface StaffWithWorkEntries extends Staff {
   daily_work_entries?: DailyWorkEntry[]
 }

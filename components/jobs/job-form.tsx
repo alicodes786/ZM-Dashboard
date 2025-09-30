@@ -67,7 +67,7 @@ export function JobForm({ job, onSuccess, onCancel }: JobFormProps) {
       try {
         const data = await ClientService.getActive()
         setClients(data)
-      } catch (err) {
+      } catch {
         setError('Failed to load clients')
       }
     }

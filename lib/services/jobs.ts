@@ -115,7 +115,7 @@ export class JobService {
   }
 
   static async create(job: JobInsert): Promise<Job> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('jobs')
       .insert(job)
       .select()
@@ -130,7 +130,7 @@ export class JobService {
   }
 
   static async update(id: string, updates: JobUpdate): Promise<Job> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('jobs')
       .update(updates)
       .eq('id', id)
@@ -241,14 +241,14 @@ export class JobService {
     }
 
     const total = data?.length || 0
-    const active = data?.filter(j => ['draft', 'active'].includes(j.status)).length || 0
-    const completed = data?.filter(j => j.status === 'completed').length || 0
-    const overdue = data?.filter(j => 
+    const active = data?.filter((j: any) => ['draft', 'active'].includes(j.status)).length || 0
+    const completed = data?.filter((j: any) => j.status === 'completed').length || 0
+    const overdue = data?.filter((j: any) => 
       j.status !== 'completed' && 
       j.target_completion_date && 
       new Date(j.target_completion_date) < new Date()
     ).length || 0
-    const totalValue = data?.reduce((sum, job) => sum + (job.actual_cost || 0), 0) || 0
+    const totalValue = data?.reduce((sum: number, job: any) => sum + (job.actual_cost || 0), 0) || 0
 
     return {
       total,

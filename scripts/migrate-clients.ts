@@ -45,7 +45,7 @@ async function migrateClientNames() {
     console.log(`   • Updated ${entries?.length || 0} work entries with client_id`)
     
     console.log(`\n📋 New Clients:`)
-    clients?.forEach((client, index) => {
+    clients?.forEach((client: any, index: number) => {
       console.log(`   ${index + 1}. ${client.name}`)
     })
     

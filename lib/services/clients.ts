@@ -65,7 +65,7 @@ export class ClientService {
   }
 
   static async create(client: ClientInsert): Promise<Client> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('clients')
       .insert(client)
       .select()
@@ -80,7 +80,7 @@ export class ClientService {
   }
 
   static async update(id: string, updates: ClientUpdate): Promise<Client> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('clients')
       .update(updates)
       .eq('id', id)
@@ -146,11 +146,11 @@ export class ClientService {
     }
 
     const totalJobs = jobStats?.length || 0
-    const activeJobs = jobStats?.filter(j => ['draft', 'active'].includes(j.status)).length || 0
-    const completedJobs = jobStats?.filter(j => j.status === 'completed').length || 0
+    const activeJobs = jobStats?.filter((j: any) => ['draft', 'active'].includes(j.status)).length || 0
+    const completedJobs = jobStats?.filter((j: any) => j.status === 'completed').length || 0
     
-    const totalHours = workStats?.reduce((sum, entry) => sum + entry.hours_worked, 0) || 0
-    const totalCost = workStats?.reduce((sum, entry) => sum + (entry.override_cost || entry.calculated_cost), 0) || 0
+    const totalHours = workStats?.reduce((sum: number, entry: any) => sum + entry.hours_worked, 0) || 0
+    const totalCost = workStats?.reduce((sum: number, entry: any) => sum + (entry.override_cost || entry.calculated_cost), 0) || 0
 
     return {
       totalJobs,

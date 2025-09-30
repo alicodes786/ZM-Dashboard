@@ -255,11 +255,62 @@ export interface Database {
           }
         ]
       }
+      users: {
+          Row: {
+            id: string
+            created_at: string
+            updated_at: string
+            username: string
+            password: string
+            role: 'admin' | 'staff'
+            full_name: string
+            email: string | null
+            active_status: boolean
+            last_login: string | null
+            staff_id: string | null
+          }
+          Insert: {
+            id?: string
+            created_at?: string
+            updated_at?: string
+            username: string
+            password: string
+            role: 'admin' | 'staff'
+            full_name: string
+            email?: string | null
+            active_status?: boolean
+            last_login?: string | null
+            staff_id?: string | null
+          }
+          Update: {
+            id?: string
+            created_at?: string
+            updated_at?: string
+            username?: string
+            password?: string
+            role?: 'admin' | 'staff'
+            full_name?: string
+            email?: string | null
+            active_status?: boolean
+            last_login?: string | null
+            staff_id?: string | null
+          }
+          Relationships: [
+            {
+              foreignKeyName: "users_staff_id_fkey"
+              columns: ["staff_id"]
+              isOneToOne: false
+              referencedRelation: "staff"
+              referencedColumns: ["id"]
+            }
+          ]
+        }
+      }
     }
     Views: {
       [_ in never]: never
     }
-      Functions: {
+    Functions: {
         migrate_client_names: {
           Args: Record<PropertyKey, never>
           Returns: undefined
@@ -276,6 +327,27 @@ export interface Database {
             entries_count: number
           }
         }
+        authenticate_user: {
+          Args: {
+            p_username: string
+            p_password: string
+          }
+          Returns: {
+            user_id: string
+            username: string
+            role: string
+            full_name: string
+            email: string
+            staff_id: string
+          }[]
+        }
+        update_user_password: {
+          Args: {
+            p_user_id: string
+            p_new_password: string
+          }
+          Returns: boolean
+        }
       }
     Enums: {
       [_ in never]: never
@@ -284,4 +356,5 @@ export interface Database {
       [_ in never]: never
     }
   }
-}
+
+

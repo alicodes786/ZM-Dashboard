@@ -82,7 +82,7 @@ export class DailyWorkService {
   }
 
   static async create(entry: DailyWorkEntryInsert): Promise<DailyWorkEntry> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('daily_work_entries')
       .insert(entry)
       .select()
@@ -97,7 +97,7 @@ export class DailyWorkService {
   }
 
   static async update(id: string, updates: DailyWorkEntryUpdate): Promise<DailyWorkEntry> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('daily_work_entries')
       .update(updates)
       .eq('id', id)
@@ -181,7 +181,7 @@ export class DailyWorkService {
       return []
     }
 
-    const uniqueNames = [...new Set(data.map(item => item.client_name))].filter(Boolean)
+    const uniqueNames = [...new Set(data.map((item: any) => item.client_name))].filter(Boolean)
     return uniqueNames
   }
 
@@ -203,13 +203,13 @@ export class DailyWorkService {
     }
 
     return {
-      earliest: data?.[0]?.date || null,
-      latest: latestData?.[0]?.date || null,
+      earliest: (data as any)?.[0]?.date || null,
+      latest: (latestData as any)?.[0]?.date || null,
     }
   }
 
   static async getMarginSummary(date: string): Promise<MarginSummary> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .rpc('get_daily_margin_summary', { p_date: date })
       .single()
 

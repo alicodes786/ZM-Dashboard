@@ -49,7 +49,6 @@ export function WorkEntryForm({ entry, defaultDate, onSuccess, onCancel }: WorkE
     register,
     handleSubmit,
     watch,
-    setValue,
     formState: { errors },
   } = useForm<WorkEntryFormData>({
     resolver: zodResolver(workEntrySchema),
@@ -79,7 +78,7 @@ export function WorkEntryForm({ entry, defaultDate, onSuccess, onCancel }: WorkE
         ])
         setStaff(staffData)
         setClients(clientsData)
-      } catch (err) {
+      } catch {
         setError('Failed to load form data')
       }
     }

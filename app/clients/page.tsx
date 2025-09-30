@@ -16,7 +16,7 @@ export default function ClientsPage() {
   const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | undefined>()
-  const [viewingClient, setViewingClient] = useState<Client | undefined>()
+  // const [viewingClient, setViewingClient] = useState<Client | undefined>()
 
   const fetchClients = async () => {
     try {
@@ -45,7 +45,6 @@ export default function ClientsPage() {
   }
 
   const handleViewClient = (client: Client) => {
-    setViewingClient(client)
     // TODO: Implement client detail view
     console.log('View client:', client)
   }

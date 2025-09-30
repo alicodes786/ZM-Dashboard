@@ -14,7 +14,7 @@ export function formatCurrency(amount: number): string {
         currency: 'GBP',
       }).format(amount)
     }
-  } catch (error) {
+  } catch {
     // Fallback if Intl.NumberFormat fails
     console.warn('Intl.NumberFormat not available, using fallback')
   }

@@ -43,7 +43,7 @@ export default function StaffPage() {
     setShowForm(true)
   }
 
-  const handleFormSuccess = (staffMember: Staff) => {
+  const handleFormSuccess = () => {
     setShowForm(false)
     setEditingStaff(undefined)
     fetchStaff()

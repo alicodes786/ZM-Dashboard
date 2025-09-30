@@ -47,7 +47,7 @@ export class StaffService {
   }
 
   static async create(staff: StaffInsert): Promise<Staff> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('staff')
       .insert(staff)
       .select()
@@ -62,7 +62,7 @@ export class StaffService {
   }
 
   static async update(id: string, updates: StaffUpdate): Promise<Staff> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('staff')
       .update(updates)
       .eq('id', id)

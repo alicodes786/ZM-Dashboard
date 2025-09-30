@@ -17,7 +17,7 @@ export default function JobsPage() {
   const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [editingJob, setEditingJob] = useState<JobWithClient | undefined>()
-  const [viewingJob, setViewingJob] = useState<JobWithClient | undefined>()
+  // const [viewingJob, setViewingJob] = useState<JobWithClient | undefined>()
   const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'overdue'>('all')
 
   const fetchJobs = async () => {
@@ -47,7 +47,6 @@ export default function JobsPage() {
   }
 
   const handleViewJob = (job: JobWithClient) => {
-    setViewingJob(job)
     // TODO: Implement job detail view
     console.log('View job:', job)
   }
