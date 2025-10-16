@@ -103,10 +103,8 @@ export class StaffService {
   static calculateHourlyRate(staff: Staff): number {
     if (staff.payment_type === 'daily_rate' && staff.daily_rate) {
       return staff.daily_rate / staff.allocated_daily_hours
-    } else if (staff.payment_type === 'monthly_salary' && staff.monthly_salary) {
-      // Calculate daily rate from monthly salary (22 working days)
-      const dailyRate = staff.monthly_salary / 22
-      return dailyRate / staff.allocated_daily_hours
+    } else if (staff.payment_type === 'hourly_rate' && staff.hourly_rate) {
+      return staff.hourly_rate
     }
     return 0
   }
@@ -129,8 +127,8 @@ export class StaffService {
   static getPaymentDisplayText(staff: Staff): string {
     if (staff.payment_type === 'daily_rate' && staff.daily_rate) {
       return `£${staff.daily_rate.toFixed(2)}/day`
-    } else if (staff.payment_type === 'monthly_salary' && staff.monthly_salary) {
-      return `£${staff.monthly_salary.toFixed(2)}/month`
+    } else if (staff.payment_type === 'hourly_rate' && staff.hourly_rate) {
+      return `£${staff.hourly_rate.toFixed(2)}/hour`
     }
     return 'Not set'
   }

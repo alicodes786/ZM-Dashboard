@@ -16,11 +16,11 @@ const staffSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   phone: z.string().optional(),
   address: z.string().optional(),
-  payment_type: z.enum(['daily_rate', 'monthly_salary'], {
+  payment_type: z.enum(['daily_rate', 'hourly_rate'], {
     required_error: 'Please select a payment type',
   }),
   daily_rate: z.number().optional(),
-  monthly_salary: z.number().optional(),
+  hourly_rate: z.number().optional(),
   allocated_daily_hours: z.number().min(0.1, 'Work hours must be greater than 0').max(24, 'Cannot exceed 24 hours'),
   pay_override_enabled: z.boolean().default(false),
   pay_override_amount: z.number().optional(),
@@ -28,8 +28,8 @@ const staffSchema = z.object({
 }).refine((data) => {
   if (data.payment_type === 'daily_rate') {
     return data.daily_rate && data.daily_rate > 0
-  } else if (data.payment_type === 'monthly_salary') {
-    return data.monthly_salary && data.monthly_salary > 0
+  } else if (data.payment_type === 'hourly_rate') {
+    return data.hourly_rate && data.hourly_rate > 0
   }
   return false
 }, {
@@ -63,7 +63,7 @@ export function StaffForm({ staff, onSuccess, onCancel }: StaffFormProps) {
       address: staff?.address || '',
       payment_type: staff?.payment_type || 'daily_rate',
       daily_rate: staff?.daily_rate || undefined,
-      monthly_salary: staff?.monthly_salary || undefined,
+      hourly_rate: staff?.hourly_rate || undefined,
       allocated_daily_hours: staff?.allocated_daily_hours || 8,
       pay_override_enabled: staff?.pay_override_enabled || false,
       pay_override_amount: staff?.pay_override_amount || undefined,
@@ -84,7 +84,7 @@ export function StaffForm({ staff, onSuccess, onCancel }: StaffFormProps) {
         phone: data.phone || null,
         address: data.address || null,
         daily_rate: data.payment_type === 'daily_rate' ? data.daily_rate || null : null,
-        monthly_salary: data.payment_type === 'monthly_salary' ? data.monthly_salary || null : null,
+        hourly_rate: data.payment_type === 'hourly_rate' ? data.hourly_rate || null : null,
         pay_override_amount: data.pay_override_enabled ? data.pay_override_amount || null : null,
       }
 
@@ -179,7 +179,7 @@ export function StaffForm({ staff, onSuccess, onCancel }: StaffFormProps) {
                 }`}
               >
                 <option value="daily_rate">Daily Rate</option>
-                <option value="monthly_salary">Monthly Salary</option>
+                <option value="hourly_rate">Hourly Rate</option>
               </select>
               {errors.payment_type && (
                 <p className="text-red-500 text-sm mt-1">{errors.payment_type.message}</p>
@@ -201,22 +201,28 @@ export function StaffForm({ staff, onSuccess, onCancel }: StaffFormProps) {
                 {errors.daily_rate && (
                   <p className="text-red-500 text-sm mt-1">{errors.daily_rate.message}</p>
                 )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Will be divided by allocated hours to calculate hourly cost
+                </p>
               </div>
             ) : (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Monthly Salary (£) *
+                  Hourly Rate (£) *
                 </label>
                 <Input
-                  {...register('monthly_salary', { valueAsNumber: true })}
+                  {...register('hourly_rate', { valueAsNumber: true })}
                   type="number"
                   step="0.01"
                   placeholder="0.00"
-                  className={errors.monthly_salary ? 'border-red-500' : ''}
+                  className={errors.hourly_rate ? 'border-red-500' : ''}
                 />
-                {errors.monthly_salary && (
-                  <p className="text-red-500 text-sm mt-1">{errors.monthly_salary.message}</p>
+                {errors.hourly_rate && (
+                  <p className="text-red-500 text-sm mt-1">{errors.hourly_rate.message}</p>
                 )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Direct hourly cost for this staff member
+                </p>
               </div>
             )}
 

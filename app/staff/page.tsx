@@ -58,8 +58,8 @@ export default function StaffPage() {
   const totalPayrollCost = activeStaff.reduce((sum, s) => {
     if (s.payment_type === 'daily_rate' && s.daily_rate) {
       return sum + s.daily_rate
-    } else if (s.payment_type === 'monthly_salary' && s.monthly_salary) {
-      return sum + (s.monthly_salary / 22) // Convert to daily rate
+    } else if (s.payment_type === 'hourly_rate' && s.hourly_rate) {
+      return sum + (s.hourly_rate * s.allocated_daily_hours) // Convert hourly to daily
     }
     return sum
   }, 0)
