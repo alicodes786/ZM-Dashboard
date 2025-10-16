@@ -18,9 +18,9 @@ export interface Database {
           email: string
           phone: string | null
           address: string | null
-          payment_type: 'daily_rate' | 'monthly_salary'
+          payment_type: 'daily_rate' | 'hourly_rate'
           daily_rate: number | null
-          monthly_salary: number | null
+          hourly_rate: number | null
           allocated_daily_hours: number
           active_status: boolean
           pay_override_enabled: boolean
@@ -34,9 +34,9 @@ export interface Database {
           email: string
           phone?: string | null
           address?: string | null
-          payment_type: 'daily_rate' | 'monthly_salary'
+          payment_type: 'daily_rate' | 'hourly_rate'
           daily_rate?: number | null
-          monthly_salary?: number | null
+          hourly_rate?: number | null
           allocated_daily_hours: number
           active_status?: boolean
           pay_override_enabled?: boolean
@@ -50,9 +50,9 @@ export interface Database {
           email?: string
           phone?: string | null
           address?: string | null
-          payment_type?: 'daily_rate' | 'monthly_salary'
+          payment_type?: 'daily_rate' | 'hourly_rate'
           daily_rate?: number | null
-          monthly_salary?: number | null
+          hourly_rate?: number | null
           allocated_daily_hours?: number
           active_status?: boolean
           pay_override_enabled?: boolean
