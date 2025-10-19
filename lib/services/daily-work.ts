@@ -57,6 +57,31 @@ export class DailyWorkService {
     return (data || []) as DailyWorkEntryWithFullRelations[]
   }
 
+  static async getByDateRange(startDate: string, endDate: string): Promise<DailyWorkEntryWithFullRelations[]> {
+    const { data, error } = await supabase
+      .from('daily_work_entries')
+      .select(`
+        *,
+        staff (*),
+        client:clients (*),
+        job:jobs (
+          *,
+          client:clients (*)
+        )
+      `)
+      .gte('date', startDate)
+      .lte('date', endDate)
+      .order('date', { ascending: true })
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching daily work entries by date range:', error)
+      throw new Error('Failed to fetch daily work entries')
+    }
+
+    return (data || []) as DailyWorkEntryWithFullRelations[]
+  }
+
   static async getByStaff(staffId: string, startDate?: string, endDate?: string): Promise<DailyWorkEntry[]> {
     let query = supabase
       .from('daily_work_entries')

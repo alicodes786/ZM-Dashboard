@@ -1,43 +1,70 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Calendar } from 'lucide-react'
+import { Plus, Calendar as CalendarIcon, List, ChevronLeft, ChevronRight } from 'lucide-react'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { WorkEntryForm } from '@/components/daily-work/work-entry-form'
-import { DailySummary } from '@/components/daily-work/daily-summary'
-import { InlineEditRow } from '@/components/daily-work/inline-edit-row'
+import { CalendarView } from '@/components/daily-work/calendar-view'
+import { ListView } from '@/components/daily-work/list-view'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { DailyWorkEntry, DailyWorkEntryWithFullRelations, DailySummary as DailySummaryType } from '@/lib/types'
+import { DailyWorkEntry, DailyWorkEntryWithFullRelations } from '@/lib/types'
 import { DailyWorkService, MarginSummary } from '@/lib/services/daily-work'
 import { formatCurrency, formatTime } from '@/lib/utils'
 
 export default function DailyWorkPage() {
   const [entries, setEntries] = useState<DailyWorkEntryWithFullRelations[]>([])
-  const [summary, setSummary] = useState<DailySummaryType[]>([])
-  const [marginSummary, setMarginSummary] = useState<MarginSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [editingEntry, setEditingEntry] = useState<DailyWorkEntry | undefined>()
-  const [inlineEditingId, setInlineEditingId] = useState<string | null>(null)
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
-  const [view, setView] = useState<'entries' | 'summary'>('entries')
+  
+  // View state
+  const [view, setView] = useState<'calendar' | 'list'>('calendar')
+  const [calendarView, setCalendarView] = useState<'week' | 'month'>('week')
+  const [currentDate, setCurrentDate] = useState(new Date())
 
-  const fetchData = async (date: string) => {
+  // Calculate date range based on current view
+  const getDateRange = () => {
+    const start = new Date(currentDate.getTime()) // Use getTime() to avoid mutation issues
+    let end: Date
+    
+    if (calendarView === 'week') {
+      // Start from Monday of the current week
+      const dayOfWeek = start.getDay()
+      const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+      start.setDate(start.getDate() + diff)
+      
+      // End on Sunday - create new Date from start
+      end = new Date(start.getTime())
+      end.setDate(end.getDate() + 6)
+    } else {
+      // Start from beginning of month
+      start.setDate(1)
+      
+      // End at end of month
+      end = new Date(start.getTime())
+      end.setMonth(end.getMonth() + 1)
+      end.setDate(0)
+    }
+    
+    return {
+      start: start.toISOString().split('T')[0],
+      end: end.toISOString().split('T')[0],
+      startDate: start,
+      endDate: end
+    }
+  }
+
+  // Fetch data for current date range
+  const fetchData = async () => {
     try {
       setError(null)
       setLoading(true)
-      const [entriesData, summaryData, marginData] = await Promise.all([
-        DailyWorkService.getByDate(date),
-        DailyWorkService.getDailySummary(date),
-        DailyWorkService.getMarginSummary(date),
-      ])
-      setEntries(entriesData)
-      setSummary(summaryData)
-      setMarginSummary(marginData)
+      
+      const { start, end } = getDateRange()
+      const data = await DailyWorkService.getByDateRange(start, end)
+      setEntries(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load daily work data')
     } finally {
@@ -46,23 +73,85 @@ export default function DailyWorkPage() {
   }
 
   useEffect(() => {
-    fetchData(selectedDate)
-  }, [selectedDate])
+    fetchData()
+  }, [currentDate, calendarView])
+
+  // Navigation functions
+  const navigatePrevious = () => {
+    const newDate = new Date(currentDate)
+    if (calendarView === 'week') {
+      newDate.setDate(newDate.getDate() - 7)
+    } else {
+      newDate.setMonth(newDate.getMonth() - 1)
+    }
+    setCurrentDate(newDate)
+  }
+
+  const navigateNext = () => {
+    const newDate = new Date(currentDate)
+    if (calendarView === 'week') {
+      newDate.setDate(newDate.getDate() + 7)
+    } else {
+      newDate.setMonth(newDate.getMonth() + 1)
+    }
+    setCurrentDate(newDate)
+  }
+
+  const navigateToday = () => {
+    setCurrentDate(new Date())
+  }
+
+  // Format period display
+  const formatPeriod = () => {
+    if (calendarView === 'week') {
+      const { startDate, endDate } = getDateRange()
+      const startDay = startDate.getDate()
+      const endDay = endDate.getDate()
+      const startMonth = startDate.toLocaleDateString('en-GB', { month: 'short' })
+      const endMonth = endDate.toLocaleDateString('en-GB', { month: 'short' })
+      const year = startDate.getFullYear()
+      
+      if (startMonth === endMonth) {
+        return `${startDay} - ${endDay} ${startMonth} ${year}`
+      } else {
+        return `${startDay} ${startMonth} - ${endDay} ${endMonth} ${year}`
+      }
+    } else {
+      return currentDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+    }
+  }
+
+  // Calculate stats for current period
+  const calculateStats = () => {
+    const totalEntries = entries.length
+    const totalHours = entries.reduce((sum, entry) => sum + entry.hours_worked, 0)
+    const totalRevenue = entries.reduce((sum, entry) => 
+      sum + (entry.client_cost || entry.override_cost || entry.calculated_cost), 0)
+    const totalCost = entries.reduce((sum, entry) => sum + entry.calculated_cost, 0)
+    const totalMargin = totalRevenue - totalCost
+    const marginPercentage = totalRevenue > 0 ? (totalMargin / totalRevenue) * 100 : 0
+    
+    return {
+      totalEntries,
+      totalHours,
+      totalRevenue,
+      totalCost,
+      totalMargin,
+      marginPercentage
+    }
+  }
+
+  const stats = calculateStats()
 
   const handleAddEntry = () => {
     setEditingEntry(undefined)
     setShowForm(true)
   }
 
-  const handleEditEntry = (entry: DailyWorkEntry) => {
-    setEditingEntry(entry)
-    setShowForm(true)
-  }
-
   const handleFormSuccess = () => {
     setShowForm(false)
     setEditingEntry(undefined)
-    fetchData(selectedDate)
+    fetchData()
   }
 
   const handleFormCancel = () => {
@@ -70,48 +159,109 @@ export default function DailyWorkPage() {
     setEditingEntry(undefined)
   }
 
-  const handleDeleteEntry = async (entry: DailyWorkEntry) => {
-    if (!confirm('Are you sure you want to delete this work entry?')) {
-      return
-    }
-
-    try {
-      await DailyWorkService.delete(entry.id)
-      fetchData(selectedDate)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete entry')
-    }
-  }
-
-  const totalHours = entries.reduce((sum, entry) => sum + entry.hours_worked, 0)
-  const totalCost = entries.reduce((sum, entry) => sum + (entry.override_cost || entry.calculated_cost), 0)
-
   const headerActions = (
-    <div className="flex items-center space-x-3">
-      <Input
-        type="date"
-        value={selectedDate}
-        onChange={(e) => setSelectedDate(e.target.value)}
-        className="w-40"
-      />
-      <Button
-        variant={view === 'entries' ? 'default' : 'outline'}
-        onClick={() => setView('entries')}
-        size="sm"
-      >
-        Entries
-      </Button>
-      <Button
-        variant={view === 'summary' ? 'default' : 'outline'}
-        onClick={() => setView('summary')}
-        size="sm"
-      >
-        Summary
-      </Button>
-      <Button onClick={handleAddEntry} className="flex items-center space-x-2">
-        <Plus className="h-4 w-4" />
-        <span>Add Entry</span>
-      </Button>
+    <div className="flex items-center justify-between w-full gap-4">
+      {/* Left side: Navigation and Period Display */}
+      <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={navigatePrevious}
+            className="h-9 w-9 p-0"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="min-w-[240px] text-center">
+            <div className="text-base font-semibold text-gray-900">
+              {formatPeriod()}
+            </div>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={navigateNext}
+            className="h-9 w-9 p-0"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <Button variant="outline" size="sm" onClick={navigateToday} className="h-9">
+          Today
+        </Button>
+      </div>
+
+      {/* Right side: View controls and Add button */}
+      <div className="flex items-center space-x-3">
+        {/* View Toggle */}
+        <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+          <Button 
+            variant="ghost"
+            size="sm" 
+            onClick={() => setView('calendar')}
+            className={`flex items-center space-x-2 rounded-none border-r border-gray-300 ${
+              view === 'calendar' 
+                ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' 
+                : 'bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <CalendarIcon className="h-4 w-4" />
+            <span>Calendar</span>
+          </Button>
+          <Button 
+            variant="ghost"
+            size="sm" 
+            onClick={() => setView('list')}
+            className={`flex items-center space-x-2 rounded-none ${
+              view === 'list' 
+                ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' 
+                : 'bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <List className="h-4 w-4" />
+            <span>List</span>
+          </Button>
+        </div>
+
+        {/* Week/Month Toggle (only for calendar view) */}
+        {view === 'calendar' && (
+          <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+            <Button 
+              variant="ghost"
+              size="sm" 
+              onClick={() => setCalendarView('week')}
+              className={`rounded-none border-r border-gray-300 ${
+                calendarView === 'week' 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Week
+            </Button>
+            <Button 
+              variant="ghost"
+              size="sm" 
+              onClick={() => setCalendarView('month')}
+              className={`rounded-none ${
+                calendarView === 'month' 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Month
+            </Button>
+          </div>
+        )}
+
+        <Button 
+          onClick={handleAddEntry} 
+          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 h-9"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Add Entry</span>
+        </Button>
+      </div>
     </div>
   )
 
@@ -121,7 +271,7 @@ export default function DailyWorkPage() {
         <div className="max-w-4xl mx-auto">
           <WorkEntryForm
             entry={editingEntry}
-            defaultDate={selectedDate}
+            defaultDate={new Date().toISOString().split('T')[0]}
             onSuccess={handleFormSuccess}
             onCancel={handleFormCancel}
           />
@@ -141,10 +291,10 @@ export default function DailyWorkPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="bg-white p-6 rounded-lg border border-gray-200">
             <div className="flex items-center">
-              <Calendar className="h-8 w-8 text-blue-600" />
+              <CalendarIcon className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Total Entries</p>
-                <p className="text-2xl font-bold text-gray-900">{entries.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.totalEntries}</p>
               </div>
             </div>
           </div>
@@ -156,7 +306,7 @@ export default function DailyWorkPage() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Total Hours</p>
-                <p className="text-2xl font-bold text-gray-900">{formatTime(totalHours)}</p>
+                <p className="text-2xl font-bold text-gray-900">{formatTime(stats.totalHours)}</p>
               </div>
             </div>
           </div>
@@ -169,10 +319,10 @@ export default function DailyWorkPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Revenue</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(marginSummary?.totalClientCost || totalCost)}
+                  {formatCurrency(stats.totalRevenue)}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Labor: {formatCurrency(marginSummary?.totalLaborCost || totalCost)}
+                  Labor: {formatCurrency(stats.totalCost)}
                 </p>
               </div>
             </div>
@@ -186,14 +336,14 @@ export default function DailyWorkPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Profit Margin</p>
                 <p className={`text-2xl font-bold ${
-                  (marginSummary?.totalMarginAmount || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                  stats.totalMargin >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
-                  {formatCurrency(marginSummary?.totalMarginAmount || 0)}
+                  {formatCurrency(stats.totalMargin)}
                 </p>
                 <p className={`text-xs ${
-                  (marginSummary?.averageMarginPercentage || 0) >= 0 ? 'text-green-500' : 'text-red-500'
+                  stats.marginPercentage >= 0 ? 'text-green-500' : 'text-red-500'
                 }`}>
-                  {marginSummary?.averageMarginPercentage || 0}% avg
+                  {Math.round(stats.marginPercentage)}% avg
                 </p>
               </div>
             </div>
@@ -215,144 +365,20 @@ export default function DailyWorkPage() {
               <span className="ml-3 text-gray-600">Loading...</span>
             </div>
           </div>
-        ) : view === 'summary' ? (
-          <DailySummary summaries={summary} date={selectedDate} />
         ) : (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            {entries.length === 0 ? (
-              <div className="text-center py-12">
-                <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-4 text-lg font-medium text-gray-900">No entries for this date</h3>
-                <p className="mt-2 text-gray-500">Add your first work entry to get started.</p>
-              </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            {view === 'calendar' ? (
+              <CalendarView 
+                entries={entries}
+                startDate={currentDate}
+                view={calendarView}
+              />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Staff</TableHead>
-                    <TableHead>Task</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Hours</TableHead>
-                    <TableHead>Cost</TableHead>
-                    <TableHead>Margin</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {entries.map((entry) => (
-                    inlineEditingId === entry.id ? (
-                      <InlineEditRow
-                        key={entry.id}
-                        entry={entry}
-                        onUpdate={() => {
-                          setInlineEditingId(null)
-                          fetchData(selectedDate)
-                        }}
-                        onCancel={() => setInlineEditingId(null)}
-                      />
-                    ) : (
-                      <TableRow key={entry.id}>
-                        <TableCell className="font-medium">
-                          {entry.staff?.name || 'Unknown Staff'}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium text-gray-900 truncate max-w-xs">
-                              {entry.task_description}
-                            </div>
-                          {entry.job && (
-                            <div className="text-sm text-blue-600 truncate max-w-xs">
-                              Job: {entry.job.title}
-                            </div>
-                          )}
-                            {entry.notes && (
-                              <div className="text-sm text-gray-500 truncate max-w-xs">
-                                {entry.notes}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">
-                              {entry.client?.name || entry.client_name}
-                            </div>
-                            {entry.client?.company_name && (
-                              <div className="text-sm text-gray-500">
-                                {entry.client.company_name}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>{formatTime(entry.hours_worked)}</TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">
-                              {formatCurrency(entry.client_cost || entry.override_cost || entry.calculated_cost)}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              Labor: {formatCurrency(entry.calculated_cost)}
-                            </div>
-                            {entry.override_cost && (
-                              <div className="text-xs text-blue-600">Custom price</div>
-                            )}
-                          </div>
-                        </TableCell>
-
-                        <TableCell>
-                          <div>
-                            {entry.margin_amount !== null && entry.margin_percentage !== null ? (
-                              <>
-                                <div className={`font-medium ${
-                                  entry.margin_amount >= 0 ? 'text-green-600' : 'text-red-600'
-                                }`}>
-                                  {entry.margin_amount >= 0 ? '+' : ''}{formatCurrency(entry.margin_amount)}
-                                </div>
-                                <div className={`text-xs ${
-                                  entry.margin_percentage >= 0 ? 'text-green-500' : 'text-red-500'
-                                }`}>
-                                  {entry.margin_percentage >= 0 ? '+' : ''}{entry.margin_percentage}%
-                                </div>
-                              </>
-                            ) : (
-                              <div className="text-gray-400 text-sm">No margin</div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setInlineEditingId(entry.id)}
-                              disabled={inlineEditingId !== null}
-                            >
-                              Quick Edit
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditEntry(entry)}
-                              disabled={inlineEditingId !== null}
-                            >
-                              Full Edit
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteEntry(entry)}
-                              className="text-red-600 hover:text-red-700"
-                              disabled={inlineEditingId !== null}
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  ))}
-                </TableBody>
-              </Table>
+              <ListView 
+                entries={entries}
+                startDate={getDateRange().startDate}
+                endDate={getDateRange().endDate}
+              />
             )}
           </div>
         )}
