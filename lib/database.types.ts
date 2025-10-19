@@ -116,7 +116,7 @@ export interface Database {
           client_id: string
           title: string
           description: string | null
-          job_type: 'maintenance' | 'repair' | 'installation' | 'inspection' | 'emergency'
+          job_type: 'maintenance' | 'repair' | 'installation' | 'inspection' | 'emergency' | 'plumbing' | 'electrical' | 'hvac' | 'roofing' | 'painting' | 'flooring' | 'landscaping' | 'renovation' | 'cleaning' | 'pest_control' | 'appliance_repair' | 'custom'
           status: 'draft' | 'active' | 'on_hold' | 'completed' | 'cancelled'
           estimated_hours: number | null
           estimated_cost: number | null
@@ -136,7 +136,7 @@ export interface Database {
           client_id: string
           title: string
           description?: string | null
-          job_type?: 'maintenance' | 'repair' | 'installation' | 'inspection' | 'emergency'
+          job_type?: 'maintenance' | 'repair' | 'installation' | 'inspection' | 'emergency' | 'plumbing' | 'electrical' | 'hvac' | 'roofing' | 'painting' | 'flooring' | 'landscaping' | 'renovation' | 'cleaning' | 'pest_control' | 'appliance_repair' | 'custom'
           status?: 'draft' | 'active' | 'on_hold' | 'completed' | 'cancelled'
           estimated_hours?: number | null
           estimated_cost?: number | null
@@ -156,7 +156,7 @@ export interface Database {
           client_id?: string
           title?: string
           description?: string | null
-          job_type?: 'maintenance' | 'repair' | 'installation' | 'inspection' | 'emergency'
+          job_type?: 'maintenance' | 'repair' | 'installation' | 'inspection' | 'emergency' | 'plumbing' | 'electrical' | 'hvac' | 'roofing' | 'painting' | 'flooring' | 'landscaping' | 'renovation' | 'cleaning' | 'pest_control' | 'appliance_repair' | 'custom'
           status?: 'draft' | 'active' | 'on_hold' | 'completed' | 'cancelled'
           estimated_hours?: number | null
           estimated_cost?: number | null

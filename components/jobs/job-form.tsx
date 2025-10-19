@@ -16,7 +16,8 @@ const jobSchema = z.object({
   client_id: z.string().min(1, 'Please select a client'),
   title: z.string().min(3, 'Job title must be at least 3 characters'),
   description: z.string().optional(),
-  job_type: z.enum(['maintenance', 'repair', 'installation', 'inspection', 'emergency']),
+  job_type: z.enum(['maintenance', 'repair', 'installation', 'inspection', 'emergency', 'plumbing', 'electrical', 'hvac', 'roofing', 'painting', 'flooring', 'landscaping', 'renovation', 'cleaning', 'pest_control', 'appliance_repair', 'custom']),
+  custom_job_type: z.string().optional(),
   status: z.enum(['draft', 'active', 'on_hold', 'completed', 'cancelled']),
   estimated_hours: z.number().optional(),
   estimated_cost: z.number().optional(),
@@ -39,11 +40,13 @@ export function JobForm({ job, onSuccess, onCancel }: JobFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [clients, setClients] = useState<Client[]>([])
+  const [showCustomJobType, setShowCustomJobType] = useState(job?.job_type === 'custom')
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
   } = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
     defaultValues: {
@@ -51,6 +54,7 @@ export function JobForm({ job, onSuccess, onCancel }: JobFormProps) {
       title: job?.title || '',
       description: job?.description || '',
       job_type: job?.job_type || 'maintenance',
+      custom_job_type: '',
       status: job?.status || 'draft',
       estimated_hours: job?.estimated_hours || undefined,
       estimated_cost: job?.estimated_cost || undefined,
@@ -61,6 +65,12 @@ export function JobForm({ job, onSuccess, onCancel }: JobFormProps) {
       notes: job?.notes || '',
     },
   })
+
+  const selectedJobType = watch('job_type')
+  
+  useEffect(() => {
+    setShowCustomJobType(selectedJobType === 'custom')
+  }, [selectedJobType])
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -79,6 +89,15 @@ export function JobForm({ job, onSuccess, onCancel }: JobFormProps) {
     setError(null)
 
     try {
+      // Store custom job type in notes if selected
+      let notes = data.notes || null;
+      if (data.job_type === 'custom' && data.custom_job_type) {
+        const customPrefix = 'Custom Job Type: ';
+        notes = notes 
+          ? `${customPrefix}${data.custom_job_type}\n\n${notes}`
+          : `${customPrefix}${data.custom_job_type}`;
+      }
+
       const jobData: JobInsert = {
         ...data,
         description: data.description || null,
@@ -87,7 +106,7 @@ export function JobForm({ job, onSuccess, onCancel }: JobFormProps) {
         start_date: data.start_date || null,
         target_completion_date: data.target_completion_date || null,
         location: data.location || null,
-        notes: data.notes || null,
+        notes: notes,
       }
 
       let result: Job
@@ -176,8 +195,32 @@ export function JobForm({ job, onSuccess, onCancel }: JobFormProps) {
                   <option value="installation">Installation</option>
                   <option value="inspection">Inspection</option>
                   <option value="emergency">Emergency</option>
+                  <option value="plumbing">Plumbing</option>
+                  <option value="electrical">Electrical</option>
+                  <option value="hvac">HVAC</option>
+                  <option value="roofing">Roofing</option>
+                  <option value="painting">Painting</option>
+                  <option value="flooring">Flooring</option>
+                  <option value="landscaping">Landscaping</option>
+                  <option value="renovation">Renovation</option>
+                  <option value="cleaning">Cleaning</option>
+                  <option value="pest_control">Pest Control</option>
+                  <option value="appliance_repair">Appliance Repair</option>
+                  <option value="custom">Custom...</option>
                 </select>
               </div>
+
+              {showCustomJobType && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Custom Job Type
+                  </label>
+                  <Input
+                    {...register('custom_job_type')}
+                    placeholder="Enter custom job type"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

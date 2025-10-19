@@ -139,7 +139,9 @@ export function JobTable({ jobs, onEdit, onView, onRefresh }: JobTableProps) {
 
                   <TableCell>
                     <span className="capitalize">
-                      {JobService.getJobTypeLabel(job.job_type)}
+                      {job.job_type === 'custom' && job.notes?.includes('Custom Job Type:') 
+                        ? job.notes.split('Custom Job Type:')[1].split('\n')[0].trim()
+                        : JobService.getJobTypeLabel(job.job_type)}
                     </span>
                   </TableCell>
 

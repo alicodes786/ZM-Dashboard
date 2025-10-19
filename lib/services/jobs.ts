@@ -189,13 +189,25 @@ export class JobService {
     }
   }
 
-  static getJobTypeLabel(jobType: Job['job_type']): string {
+  static getJobTypeLabel(jobType: Job['job_type'], customJobType?: string): string {
     switch (jobType) {
       case 'maintenance': return 'Maintenance'
       case 'repair': return 'Repair'
       case 'installation': return 'Installation'
       case 'inspection': return 'Inspection'
       case 'emergency': return 'Emergency'
+      case 'plumbing': return 'Plumbing'
+      case 'electrical': return 'Electrical'
+      case 'hvac': return 'HVAC'
+      case 'roofing': return 'Roofing'
+      case 'painting': return 'Painting'
+      case 'flooring': return 'Flooring'
+      case 'landscaping': return 'Landscaping'
+      case 'renovation': return 'Renovation'
+      case 'cleaning': return 'Cleaning'
+      case 'pest_control': return 'Pest Control'
+      case 'appliance_repair': return 'Appliance Repair'
+      case 'custom': return customJobType || 'Custom'
       default: return 'Maintenance'
     }
   }
