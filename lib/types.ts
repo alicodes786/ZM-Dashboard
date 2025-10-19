@@ -20,6 +20,68 @@ export type User = Database['public']['Tables']['users']['Row']
 export type UserInsert = Database['public']['Tables']['users']['Insert']
 export type UserUpdate = Database['public']['Tables']['users']['Update']
 
+// Staff Payments types
+export interface StaffPayment {
+  id: string
+  created_at: string
+  updated_at: string
+  staff_id: string
+  period_start: string
+  period_end: string
+  amount_due: number
+  amount_paid: number
+  payment_date: string | null
+  payment_method: string | null
+  payment_reference: string | null
+  status: 'pending' | 'paid' | 'partially_paid' | 'cancelled'
+  notes: string | null
+  work_entry_ids: string[] | null
+}
+
+export interface StaffPaymentInsert {
+  staff_id: string
+  period_start: string
+  period_end: string
+  amount_due: number
+  amount_paid?: number
+  payment_date?: string | null
+  payment_method?: string | null
+  payment_reference?: string | null
+  status?: 'pending' | 'paid' | 'partially_paid' | 'cancelled'
+  notes?: string | null
+  work_entry_ids?: string[] | null
+}
+
+export interface StaffPaymentUpdate {
+  period_start?: string
+  period_end?: string
+  amount_due?: number
+  amount_paid?: number
+  payment_date?: string | null
+  payment_method?: string | null
+  payment_reference?: string | null
+  status?: 'pending' | 'paid' | 'partially_paid' | 'cancelled'
+  notes?: string | null
+  work_entry_ids?: string[] | null
+}
+
+export interface StaffPaymentWithStaff extends StaffPayment {
+  staff?: Staff
+}
+
+export interface StaffWagesSummary {
+  staffId: string
+  staffName: string
+  totalHoursWorked: number
+  totalWagesDue: number
+  totalPaid: number
+  totalOutstanding: number
+  lastPaymentDate: string | null
+  periodStart: string
+  periodEnd: string
+  workEntriesCount: number
+}
+
 export interface StaffWithWorkEntries extends Staff {
   daily_work_entries?: DailyWorkEntry[]
 }

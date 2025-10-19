@@ -6,12 +6,13 @@ import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Users, ClipboardList, TrendingUp, Calendar, Plus, ArrowRight, Building2, Briefcase } from 'lucide-react'
+import { Users, ClipboardList, TrendingUp, Calendar, Plus, ArrowRight, Building2, Briefcase, DollarSign, Clock } from 'lucide-react'
 import { Staff, DailyWorkEntryWithFullRelations, Client, JobWithClient } from '@/lib/types'
 import { StaffService } from '@/lib/services/staff'
 import { DailyWorkService } from '@/lib/services/daily-work'
 import { ClientService } from '@/lib/services/clients'
 import { JobService } from '@/lib/services/jobs'
+import { PaymentsService } from '@/lib/services/payments'
 import { formatCurrency, formatTime } from '@/lib/utils'
 
 export default function Home() {
@@ -23,6 +24,7 @@ export default function Home() {
     totalMarginAmount: number;
     averageMarginPercentage: number;
   } | null>(null)
+  const [outstandingWages, setOutstandingWages] = useState<number>(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -30,18 +32,20 @@ export default function Home() {
     const fetchDashboardData = async () => {
       try {
         const today = new Date().toISOString().split('T')[0]
-        const [staffData, clientsData, jobsData, entriesData, marginData] = await Promise.all([
+        const [staffData, clientsData, jobsData, entriesData, marginData, outstandingData] = await Promise.all([
           StaffService.getAll(),
           ClientService.getAll(),
           JobService.getActiveJobs(),
           DailyWorkService.getByDate(today),
           DailyWorkService.getMarginSummary(today),
+          PaymentsService.getTotalOutstanding(),
         ])
         setStaff(staffData)
         setClients(clientsData)
         setJobs(jobsData)
         setTodayEntries(entriesData)
         setTodayMargin(marginData)
+        setOutstandingWages(outstandingData)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load dashboard data')
       } finally {
@@ -83,7 +87,7 @@ export default function Home() {
         )}
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -137,6 +141,23 @@ export default function Home() {
               </div>
             </CardContent>
           </Card>
+
+          <Link href="/staff-wages">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <Clock className="h-8 w-8 text-red-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-500">Outstanding Wages</p>
+                    <p className="text-2xl font-bold text-gray-900">{formatCurrency(outstandingWages)}</p>
+                    <p className="text-xs text-red-600">
+                      Pending payments
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
 
         {/* Quick Actions */}
@@ -145,36 +166,44 @@ export default function Home() {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <Link href="/clients">
-                <Button variant="outline" className="w-full h-20 flex flex-col space-y-2">
+                <Button variant="outline" className="w-full h-20 flex flex-col space-y-1">
                   <Building2 className="h-6 w-6" />
-                  <span>Manage Clients</span>
-                  <span className="text-xs text-gray-500">Add and manage client information</span>
+                  <span className="font-medium">Manage Clients</span>
+                  <span className="text-xs text-gray-500">Client information</span>
                 </Button>
               </Link>
 
               <Link href="/jobs">
-                <Button variant="outline" className="w-full h-20 flex flex-col space-y-2">
+                <Button variant="outline" className="w-full h-20 flex flex-col space-y-1">
                   <Briefcase className="h-6 w-6" />
-                  <span>Manage Jobs</span>
-                  <span className="text-xs text-gray-500">Create and track project progress</span>
+                  <span className="font-medium">Manage Jobs</span>
+                  <span className="text-xs text-gray-500">Track projects</span>
                 </Button>
               </Link>
 
               <Link href="/staff">
-                <Button variant="outline" className="w-full h-20 flex flex-col space-y-2">
+                <Button variant="outline" className="w-full h-20 flex flex-col space-y-1">
                   <Users className="h-6 w-6" />
-                  <span>Manage Staff</span>
-                  <span className="text-xs text-gray-500">Add, edit, or view staff members</span>
+                  <span className="font-medium">Manage Staff</span>
+                  <span className="text-xs text-gray-500">Staff members</span>
+                </Button>
+              </Link>
+
+              <Link href="/staff-wages">
+                <Button variant="outline" className="w-full h-20 flex flex-col space-y-1">
+                  <DollarSign className="h-6 w-6" />
+                  <span className="font-medium">Staff Wages</span>
+                  <span className="text-xs text-gray-500">Track payments</span>
                 </Button>
               </Link>
               
               <Link href="/daily-work">
-                <Button variant="outline" className="w-full h-20 flex flex-col space-y-2">
+                <Button variant="outline" className="w-full h-20 flex flex-col space-y-1">
                   <ClipboardList className="h-6 w-6" />
-                  <span>Daily Work</span>
-                  <span className="text-xs text-gray-500">Log tasks and track hours</span>
+                  <span className="font-medium">Daily Work</span>
+                  <span className="text-xs text-gray-500">Log tasks & hours</span>
                 </Button>
               </Link>
             </div>

@@ -12,7 +12,9 @@ import {
   Settings,
   Building2,
   LogOut,
-  User
+  User,
+  DollarSign,
+  Briefcase
 } from 'lucide-react'
 
 interface NavigationItem {
@@ -26,8 +28,9 @@ interface NavigationItem {
 const navigation: NavigationItem[] = [
   { name: 'Overview', href: '/', icon: BarChart3 },
   { name: 'Clients', href: '/clients', icon: Building2 },
-  { name: 'Jobs', href: '/jobs', icon: FileText },
+  { name: 'Jobs', href: '/jobs', icon: Briefcase },
   { name: 'Staff', href: '/staff', icon: Users },
+  { name: 'Staff Wages', href: '/staff-wages', icon: DollarSign },
   { name: 'Daily Work', href: '/daily-work', icon: ClipboardList },
   { name: 'Users', href: '/users', icon: User, adminOnly: true },
   { name: 'Reports', href: '/reports', icon: BarChart3, disabled: true },
