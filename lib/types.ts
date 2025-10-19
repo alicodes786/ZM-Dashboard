@@ -151,3 +151,41 @@ export interface ModuleConfig {
   }
   alerts: AlertConfig
 }
+
+// Invoice types
+export type Invoice = Database['public']['Tables']['invoices']['Row']
+export type InvoiceInsert = Database['public']['Tables']['invoices']['Insert']
+export type InvoiceUpdate = Database['public']['Tables']['invoices']['Update']
+
+export type InvoiceAdditionalCost = Database['public']['Tables']['invoice_additional_costs']['Row']
+export type InvoiceAdditionalCostInsert = Database['public']['Tables']['invoice_additional_costs']['Insert']
+export type InvoiceAdditionalCostUpdate = Database['public']['Tables']['invoice_additional_costs']['Update']
+
+export type InvoiceWorkEntry = Database['public']['Tables']['invoice_work_entries']['Row']
+export type InvoiceWorkEntryInsert = Database['public']['Tables']['invoice_work_entries']['Insert']
+export type InvoiceWorkEntryUpdate = Database['public']['Tables']['invoice_work_entries']['Update']
+
+export interface InvoiceWithClient extends Invoice {
+  client?: Client
+}
+
+export interface InvoiceWithRelations extends Invoice {
+  client?: Client
+  additional_costs?: InvoiceAdditionalCost[]
+  work_entries?: InvoiceWorkEntryWithDetails[]
+}
+
+export interface InvoiceWorkEntryWithDetails extends InvoiceWorkEntry {
+  daily_work_entry?: DailyWorkEntryWithFullRelations
+}
+
+export interface InvoiceFormData {
+  client_id: string
+  period_start: string
+  period_end: string
+  issue_date: string
+  due_date?: string
+  vat_rate?: number
+  notes?: string
+  status?: 'draft' | 'issued' | 'paid' | 'overdue' | 'cancelled'
+}

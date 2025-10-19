@@ -311,6 +311,175 @@ export interface Database {
             }
           ]
         }
+      invoices: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          invoice_number: string
+          client_id: string
+          period_start: string
+          period_end: string
+          issue_date: string
+          due_date: string | null
+          status: 'draft' | 'issued' | 'paid' | 'overdue' | 'cancelled'
+          subtotal: number
+          additional_cost_total: number
+          vat_rate: number | null
+          vat_amount: number | null
+          total_amount: number
+          paid_amount: number | null
+          payment_date: string | null
+          payment_reference: string | null
+          payment_method: string | null
+          notes: string | null
+          transaction_id: string | null
+          bank_reference: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          invoice_number: string
+          client_id: string
+          period_start: string
+          period_end: string
+          issue_date?: string
+          due_date?: string | null
+          status?: 'draft' | 'issued' | 'paid' | 'overdue' | 'cancelled'
+          subtotal?: number
+          additional_cost_total?: number
+          vat_rate?: number | null
+          vat_amount?: number | null
+          total_amount?: number
+          paid_amount?: number | null
+          payment_date?: string | null
+          payment_reference?: string | null
+          payment_method?: string | null
+          notes?: string | null
+          transaction_id?: string | null
+          bank_reference?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          invoice_number?: string
+          client_id?: string
+          period_start?: string
+          period_end?: string
+          issue_date?: string
+          due_date?: string | null
+          status?: 'draft' | 'issued' | 'paid' | 'overdue' | 'cancelled'
+          subtotal?: number
+          additional_cost_total?: number
+          vat_rate?: number | null
+          vat_amount?: number | null
+          total_amount?: number
+          paid_amount?: number | null
+          payment_date?: string | null
+          payment_reference?: string | null
+          payment_method?: string | null
+          notes?: string | null
+          transaction_id?: string | null
+          bank_reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      invoice_additional_costs: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          invoice_id: string
+          description: string
+          amount: number
+          cost_type: 'expense' | 'material' | 'transport' | 'subcontracting' | 'misc'
+          date: string
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          invoice_id: string
+          description: string
+          amount: number
+          cost_type?: 'expense' | 'material' | 'transport' | 'subcontracting' | 'misc'
+          date?: string
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          invoice_id?: string
+          description?: string
+          amount?: number
+          cost_type?: 'expense' | 'material' | 'transport' | 'subcontracting' | 'misc'
+          date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_additional_costs_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      invoice_work_entries: {
+        Row: {
+          id: string
+          created_at: string
+          invoice_id: string
+          work_entry_id: string
+          hours_worked: number
+          labor_cost: number
+          client_cost: number
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          invoice_id: string
+          work_entry_id: string
+          hours_worked: number
+          labor_cost: number
+          client_cost: number
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          invoice_id?: string
+          work_entry_id?: string
+          hours_worked?: number
+          labor_cost?: number
+          client_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_work_entries_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_work_entries_work_entry_id_fkey"
+            columns: ["work_entry_id"]
+            isOneToOne: false
+            referencedRelation: "daily_work_entries"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       }
     }
     Views: {

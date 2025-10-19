@@ -14,7 +14,8 @@ import {
   LogOut,
   User,
   DollarSign,
-  Briefcase
+  Briefcase,
+  Receipt
 } from 'lucide-react'
 
 interface NavigationItem {
@@ -29,6 +30,7 @@ const navigation: NavigationItem[] = [
   { name: 'Overview', href: '/', icon: BarChart3 },
   { name: 'Clients', href: '/clients', icon: Building2 },
   { name: 'Jobs', href: '/jobs', icon: Briefcase },
+  { name: 'Invoices', href: '/invoices', icon: Receipt },
   { name: 'Staff', href: '/staff', icon: Users },
   { name: 'Staff Wages', href: '/staff-wages', icon: DollarSign },
   { name: 'Daily Work', href: '/daily-work', icon: ClipboardList },
