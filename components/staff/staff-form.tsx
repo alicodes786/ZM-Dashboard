@@ -22,6 +22,7 @@ const staffSchema = z.object({
   daily_rate: z.number().optional(),
   hourly_rate: z.number().optional(),
   allocated_daily_hours: z.number().min(0.1, 'Work hours must be greater than 0').max(24, 'Cannot exceed 24 hours'),
+  overtime_rate_multiplier: z.number().min(1, 'Multiplier must be at least 1').max(3, 'Multiplier cannot exceed 3').default(1.5),
   pay_override_enabled: z.boolean().default(false),
   pay_override_amount: z.number().optional(),
   active_status: z.boolean().default(true),
@@ -65,6 +66,7 @@ export function StaffForm({ staff, onSuccess, onCancel }: StaffFormProps) {
       daily_rate: staff?.daily_rate || undefined,
       hourly_rate: staff?.hourly_rate || undefined,
       allocated_daily_hours: staff?.allocated_daily_hours || 8,
+      overtime_rate_multiplier: staff?.overtime_rate_multiplier || 1.5,
       pay_override_enabled: staff?.pay_override_enabled || false,
       pay_override_amount: staff?.pay_override_amount || undefined,
       active_status: staff?.active_status ?? true,
@@ -240,6 +242,25 @@ export function StaffForm({ staff, onSuccess, onCancel }: StaffFormProps) {
               {errors.allocated_daily_hours && (
                 <p className="text-red-500 text-sm mt-1">{errors.allocated_daily_hours.message}</p>
               )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Overtime Rate Multiplier *
+              </label>
+              <Input
+                {...register('overtime_rate_multiplier', { valueAsNumber: true })}
+                type="number"
+                step="0.1"
+                placeholder="1.5"
+                className={errors.overtime_rate_multiplier ? 'border-red-500' : ''}
+              />
+              {errors.overtime_rate_multiplier && (
+                <p className="text-red-500 text-sm mt-1">{errors.overtime_rate_multiplier.message}</p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Multiplier for overtime pay (e.g., 1.5 for time-and-a-half)
+              </p>
             </div>
           </div>
 

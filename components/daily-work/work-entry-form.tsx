@@ -22,6 +22,7 @@ const workEntrySchema = z.object({
   client_id: z.string().min(1, 'Please select a client'),
   job_id: z.string().optional(),
   hours_worked: z.number().min(0.1, 'Hours must be greater than 0').max(24, 'Hours cannot exceed 24'),
+  overtime_hours: z.number().min(0, 'Overtime hours cannot be negative').max(24, 'Overtime hours cannot exceed 24').default(0),
   override_cost: z.number().optional(),
   notes: z.string().optional(),
 })
@@ -59,6 +60,7 @@ export function WorkEntryForm({ entry, defaultDate, onSuccess, onCancel }: WorkE
       client_id: entry?.client_id || '',
       job_id: entry?.job_id || '',
       hours_worked: entry?.hours_worked || 0,
+      overtime_hours: entry?.overtime_hours || 0,
       override_cost: entry?.override_cost || undefined,
       notes: entry?.notes || '',
     },
@@ -67,6 +69,7 @@ export function WorkEntryForm({ entry, defaultDate, onSuccess, onCancel }: WorkE
   const watchedStaffId = watch('staff_id')
   const watchedClientId = watch('client_id')
   const watchedHours = watch('hours_worked')
+  const watchedOvertimeHours = watch('overtime_hours')
   const watchedOverrideCost = watch('override_cost')
 
   useEffect(() => {
@@ -111,17 +114,17 @@ export function WorkEntryForm({ entry, defaultDate, onSuccess, onCancel }: WorkE
     const staffMember = staff.find(s => s.id === watchedStaffId)
     setSelectedStaff(staffMember || null)
 
-    if (staffMember && watchedHours > 0) {
-      const cost = StaffService.calculateTaskCost(watchedHours, staffMember)
+    if (staffMember && (watchedHours > 0 || watchedOvertimeHours > 0)) {
+      const cost = StaffService.calculateTaskCost(watchedHours, staffMember, false, watchedOvertimeHours)
       setCalculatedCost(cost)
     } else {
       setCalculatedCost(0)
     }
-  }, [watchedStaffId, watchedHours, staff])
+  }, [watchedStaffId, watchedHours, watchedOvertimeHours, staff])
 
   // Calculate client cost and margin for display (simplified)
   const getClientCostAndMargin = () => {
-    if (!selectedStaff || watchedHours <= 0) {
+    if (!selectedStaff || (watchedHours <= 0 && watchedOvertimeHours <= 0)) {
       return { clientCost: 0, marginAmount: 0, marginPercentage: 0 }
     }
 
@@ -149,6 +152,7 @@ export function WorkEntryForm({ entry, defaultDate, onSuccess, onCancel }: WorkE
         ...data,
         client_name: selectedClient?.name || 'Unknown Client', // Keep for backward compatibility
         job_id: data.job_id || null,
+        overtime_hours: data.overtime_hours || 0,
         override_cost: data.override_cost || null,
         notes: data.notes || null,
       }
@@ -287,7 +291,7 @@ export function WorkEntryForm({ entry, defaultDate, onSuccess, onCancel }: WorkE
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Hours Worked *
+                Regular Hours Worked *
               </label>
               <Input
                 {...register('hours_worked', { valueAsNumber: true })}
@@ -300,10 +304,29 @@ export function WorkEntryForm({ entry, defaultDate, onSuccess, onCancel }: WorkE
                 <p className="text-red-500 text-sm mt-1">{errors.hours_worked.message}</p>
               )}
             </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Overtime Hours
+              </label>
+              <Input
+                {...register('overtime_hours', { valueAsNumber: true })}
+                type="number"
+                step="0.25"
+                placeholder="0.00"
+                className={errors.overtime_hours ? 'border-red-500' : ''}
+              />
+              {errors.overtime_hours && (
+                <p className="text-red-500 text-sm mt-1">{errors.overtime_hours.message}</p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Additional hours at {selectedStaff ? (selectedStaff.overtime_rate_multiplier || 1.5) + 'x' : '1.5x'} rate
+              </p>
+            </div>
           </div>
 
           {/* Enhanced Cost Calculation Display */}
-          {selectedStaff && watchedHours > 0 && (
+          {selectedStaff && (watchedHours > 0 || watchedOvertimeHours > 0) && (
             <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-4">
               <h4 className="font-medium text-gray-900 mb-3">💰 Cost & Margin Breakdown</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
@@ -315,7 +338,14 @@ export function WorkEntryForm({ entry, defaultDate, onSuccess, onCancel }: WorkE
                     {formatCurrency(calculatedCost)}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {watchedHours}h × {formatCurrency(StaffService.calculateHourlyRate(selectedStaff))}/h
+                    {watchedHours > 0 && (
+                      <div>{watchedHours}h × {formatCurrency(StaffService.calculateHourlyRate(selectedStaff))}/h</div>
+                    )}
+                    {watchedOvertimeHours > 0 && (
+                      <div className="text-orange-600">
+                        +{watchedOvertimeHours}h overtime × {formatCurrency(StaffService.calculateHourlyRate(selectedStaff) * (selectedStaff.overtime_rate_multiplier || 1.5))}/h
+                      </div>
+                    )}
                   </div>
                 </div>
 

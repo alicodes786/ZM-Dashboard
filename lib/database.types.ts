@@ -25,6 +25,7 @@ export interface Database {
           active_status: boolean
           pay_override_enabled: boolean
           pay_override_amount: number | null
+          overtime_rate_multiplier: number
         }
         Insert: {
           id?: string
@@ -41,6 +42,7 @@ export interface Database {
           active_status?: boolean
           pay_override_enabled?: boolean
           pay_override_amount?: number | null
+          overtime_rate_multiplier?: number
         }
         Update: {
           id?: string
@@ -57,6 +59,7 @@ export interface Database {
           active_status?: boolean
           pay_override_enabled?: boolean
           pay_override_amount?: number | null
+          overtime_rate_multiplier?: number
         }
         Relationships: []
       }
@@ -186,6 +189,7 @@ export interface Database {
           task_description: string
           client_name: string
           hours_worked: number
+          overtime_hours: number
           calculated_cost: number
           override_cost: number | null
           notes: string | null
@@ -204,6 +208,7 @@ export interface Database {
           task_description: string
           client_name: string
           hours_worked: number
+          overtime_hours?: number
           calculated_cost?: number
           override_cost?: number | null
           notes?: string | null
@@ -222,6 +227,7 @@ export interface Database {
           task_description?: string
           client_name?: string
           hours_worked?: number
+          overtime_hours?: number
           calculated_cost?: number
           override_cost?: number | null
           notes?: string | null

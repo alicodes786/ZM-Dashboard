@@ -112,16 +112,25 @@ export class StaffService {
   static calculateTaskCost(
     hoursWorked: number, 
     staff: Staff, 
-    useOverride: boolean = false
+    useOverride: boolean = false,
+    overtimeHours: number = 0
   ): number {
     if (useOverride && staff.pay_override_enabled && staff.pay_override_amount) {
       return staff.pay_override_amount
     }
 
     const hourlyRate = this.calculateHourlyRate(staff)
-    const baseCost = hoursWorked * hourlyRate
+    const regularHours = Math.max(0, hoursWorked)
+    const regularCost = regularHours * hourlyRate
     
-    return Math.round(baseCost * 100) / 100
+    // Calculate overtime cost with multiplier (default to 1.5 if not set)
+    const overtimeMultiplier = staff.overtime_rate_multiplier || 1.5
+    const overtimeCost = overtimeHours * hourlyRate * overtimeMultiplier
+    
+    // Total cost is regular + overtime
+    const totalCost = regularCost + overtimeCost
+    
+    return Math.round(totalCost * 100) / 100
   }
 
   static getPaymentDisplayText(staff: Staff): string {
