@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { Job, JobInsert, JobUpdate, JobWithClient, JobWithWorkEntries } from '@/lib/types'
+import { JOB_TYPES } from '@/lib/constants'
 
 export class JobService {
   static async getAll(): Promise<JobWithClient[]> {
@@ -115,34 +116,58 @@ export class JobService {
   }
 
   static async create(job: JobInsert): Promise<Job> {
-    const { data, error } = await (supabase as any)
-      .from('jobs')
-      .insert(job)
-      .select()
-      .single()
+    try {
+      // Make sure job_type is a string
+      const jobData = {
+        ...job,
+        job_type: String(job.job_type || 'maintenance')
+      }
 
-    if (error) {
-      console.error('Error creating job:', error)
-      throw new Error('Failed to create job')
+      // Use the original approach with type casting
+      const { data, error } = await (supabase as any)
+        .from('jobs')
+        .insert(jobData)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Error creating job:', error)
+        throw new Error(`Failed to create job: ${error.message}`)
+      }
+
+      return data
+    } catch (err) {
+      console.error('Exception in create job:', err)
+      throw err
     }
-
-    return data
   }
 
   static async update(id: string, updates: JobUpdate): Promise<Job> {
-    const { data, error } = await (supabase as any)
-      .from('jobs')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single()
+    try {
+      // Make sure job_type is a string if it exists in updates
+      const updateData = {
+        ...updates,
+        job_type: updates.job_type ? String(updates.job_type) : undefined
+      }
 
-    if (error) {
-      console.error('Error updating job:', error)
-      throw new Error('Failed to update job')
+      // Use the original approach with type casting
+      const { data, error } = await (supabase as any)
+        .from('jobs')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Error updating job:', error)
+        throw new Error(`Failed to update job: ${error.message}`)
+      }
+
+      return data
+    } catch (err) {
+      console.error('Exception in update job:', err)
+      throw err
     }
-
-    return data
   }
 
   static async delete(id: string): Promise<void> {
@@ -189,27 +214,21 @@ export class JobService {
     }
   }
 
-  static getJobTypeLabel(jobType: Job['job_type'], customJobType?: string): string {
-    switch (jobType) {
-      case 'maintenance': return 'Maintenance'
-      case 'repair': return 'Repair'
-      case 'installation': return 'Installation'
-      case 'inspection': return 'Inspection'
-      case 'emergency': return 'Emergency'
-      case 'plumbing': return 'Plumbing'
-      case 'electrical': return 'Electrical'
-      case 'hvac': return 'HVAC'
-      case 'roofing': return 'Roofing'
-      case 'painting': return 'Painting'
-      case 'flooring': return 'Flooring'
-      case 'landscaping': return 'Landscaping'
-      case 'renovation': return 'Renovation'
-      case 'cleaning': return 'Cleaning'
-      case 'pest_control': return 'Pest Control'
-      case 'appliance_repair': return 'Appliance Repair'
-      case 'custom': return customJobType || 'Custom'
-      default: return 'Maintenance'
+  static getJobTypeLabel(jobType: string): string {
+    // First check if it's one of our predefined types
+    const predefinedType = JOB_TYPES.find(type => type.value === jobType)
+    if (predefinedType) {
+      return predefinedType.label
     }
+    
+    // If not found in predefined types, it might be a custom type
+    // Just capitalize the first letter and return
+    if (jobType) {
+      return jobType.charAt(0).toUpperCase() + jobType.slice(1).replace(/_/g, ' ')
+    }
+    
+    // Fallback
+    return 'Maintenance'
   }
 
   static calculateProgress(job: Job): number {

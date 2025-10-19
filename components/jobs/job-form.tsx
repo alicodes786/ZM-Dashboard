@@ -11,12 +11,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Job, JobInsert, Client } from '@/lib/types'
 import { JobService } from '@/lib/services/jobs'
 import { ClientService } from '@/lib/services/clients'
+import { JOB_TYPES, JOB_STATUSES, JOB_PRIORITIES } from '@/lib/constants'
 
 const jobSchema = z.object({
   client_id: z.string().min(1, 'Please select a client'),
   title: z.string().min(3, 'Job title must be at least 3 characters'),
   description: z.string().optional(),
-  job_type: z.enum(['maintenance', 'repair', 'installation', 'inspection', 'emergency', 'plumbing', 'electrical', 'hvac', 'roofing', 'painting', 'flooring', 'landscaping', 'renovation', 'cleaning', 'pest_control', 'appliance_repair', 'custom']),
+  job_type: z.string().min(1, 'Please select a job type'),
   custom_job_type: z.string().optional(),
   status: z.enum(['draft', 'active', 'on_hold', 'completed', 'cancelled']),
   estimated_hours: z.number().optional(),
@@ -45,16 +46,18 @@ export function JobForm({ job, onSuccess, onCancel }: JobFormProps) {
   const {
     register,
     handleSubmit,
-    formState: { errors },
     watch,
+    formState: { errors },
   } = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
     defaultValues: {
       client_id: job?.client_id || '',
       title: job?.title || '',
       description: job?.description || '',
-      job_type: job?.job_type || 'maintenance',
-      custom_job_type: '',
+      // Check if job_type is in our predefined list, if not, set it to custom
+      job_type: job ? (JOB_TYPES.some(type => type.value === job.job_type) ? job.job_type : 'custom') : 'maintenance',
+      // If job_type is custom, use the job_type value as custom_job_type
+      custom_job_type: job && !JOB_TYPES.some(type => type.value === job.job_type) ? job.job_type : '',
       status: job?.status || 'draft',
       estimated_hours: job?.estimated_hours || undefined,
       estimated_cost: job?.estimated_cost || undefined,
@@ -66,11 +69,21 @@ export function JobForm({ job, onSuccess, onCancel }: JobFormProps) {
     },
   })
 
+  // Watch for changes to job_type to show/hide custom job type field
   const selectedJobType = watch('job_type')
   
+  // Check if the job has a custom type that's not in our predefined list
   useEffect(() => {
-    setShowCustomJobType(selectedJobType === 'custom')
-  }, [selectedJobType])
+    if (job) {
+      const isCustomType = !JOB_TYPES.some(type => type.value === job.job_type);
+      if (isCustomType && job.job_type !== 'custom') {
+        // It's a custom type, so we should show the custom input
+        setShowCustomJobType(true);
+      }
+    } else {
+      setShowCustomJobType(selectedJobType === 'custom')
+    }
+  }, [selectedJobType, job])
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -89,24 +102,32 @@ export function JobForm({ job, onSuccess, onCancel }: JobFormProps) {
     setError(null)
 
     try {
-      // Store custom job type in notes if selected
-      let notes = data.notes || null;
-      if (data.job_type === 'custom' && data.custom_job_type) {
-        const customPrefix = 'Custom Job Type: ';
-        notes = notes 
-          ? `${customPrefix}${data.custom_job_type}\n\n${notes}`
-          : `${customPrefix}${data.custom_job_type}`;
+      // If custom job type is selected but no custom value provided, show error
+      if (data.job_type === 'custom' && !data.custom_job_type) {
+        setError('Please enter a custom job type')
+        setIsLoading(false)
+        return
       }
 
+      // Prepare job data
+      let finalJobType = data.job_type;
+      if (data.job_type === 'custom' && data.custom_job_type) {
+        finalJobType = data.custom_job_type.trim();
+      }
+
+      // Remove custom_job_type as it's not in the database schema
+      const { custom_job_type, ...restData } = data;
+      
       const jobData: JobInsert = {
-        ...data,
+        ...restData,
+        job_type: finalJobType,
         description: data.description || null,
         estimated_hours: data.estimated_hours || null,
         estimated_cost: data.estimated_cost || null,
         start_date: data.start_date || null,
         target_completion_date: data.target_completion_date || null,
         location: data.location || null,
-        notes: notes,
+        notes: data.notes || null,
       }
 
       let result: Job
@@ -190,37 +211,26 @@ export function JobForm({ job, onSuccess, onCancel }: JobFormProps) {
                   {...register('job_type')}
                   className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
-                  <option value="maintenance">Maintenance</option>
-                  <option value="repair">Repair</option>
-                  <option value="installation">Installation</option>
-                  <option value="inspection">Inspection</option>
-                  <option value="emergency">Emergency</option>
-                  <option value="plumbing">Plumbing</option>
-                  <option value="electrical">Electrical</option>
-                  <option value="hvac">HVAC</option>
-                  <option value="roofing">Roofing</option>
-                  <option value="painting">Painting</option>
-                  <option value="flooring">Flooring</option>
-                  <option value="landscaping">Landscaping</option>
-                  <option value="renovation">Renovation</option>
-                  <option value="cleaning">Cleaning</option>
-                  <option value="pest_control">Pest Control</option>
-                  <option value="appliance_repair">Appliance Repair</option>
-                  <option value="custom">Custom...</option>
+                  {JOB_TYPES.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
                 </select>
+                {errors.job_type && (
+                  <p className="text-red-500 text-sm mt-1">{errors.job_type.message}</p>
+                )}
+                
+                {showCustomJobType && (
+                  <div className="mt-2">
+                    <Input
+                      {...register('custom_job_type')}
+                      placeholder="Enter custom job type"
+                      className="mt-1"
+                    />
+                  </div>
+                )}
               </div>
-
-              {showCustomJobType && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Custom Job Type
-                  </label>
-                  <Input
-                    {...register('custom_job_type')}
-                    placeholder="Enter custom job type"
-                  />
-                </div>
-              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -230,10 +240,11 @@ export function JobForm({ job, onSuccess, onCancel }: JobFormProps) {
                   {...register('priority')}
                   className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="urgent">Urgent</option>
+                  {JOB_PRIORITIES.map((priority) => (
+                    <option key={priority.value} value={priority.value}>
+                      {priority.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -245,11 +256,11 @@ export function JobForm({ job, onSuccess, onCancel }: JobFormProps) {
                   {...register('status')}
                   className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
-                  <option value="draft">Draft</option>
-                  <option value="active">Active</option>
-                  <option value="on_hold">On Hold</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
+                  {JOB_STATUSES.map((status) => (
+                    <option key={status.value} value={status.value}>
+                      {status.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
